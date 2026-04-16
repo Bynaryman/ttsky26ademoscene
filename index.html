@@ -1,0 +1,62 @@
+<!DOCTYPE html><html>
+<head>
+<meta charset="UTF-8">
+<title>Minimal MilkDrop TT</title>
+<style>
+  body { margin: 0; background: black; }
+  canvas { display: block; margin: auto; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");const W = 256;
+const H = 256;
+
+canvas.width = W;
+canvas.height = H;
+
+let t = 0;
+
+function render() {
+const img = ctx.createImageData(W, H);
+const data = img.data;
+
+for (let y = 0; y < H; y++) {
+for (let x = 0; x < W; x++) {
+
+  let nx = (x / W) * 2 - 1;
+  let ny = (y / H) * 2 - 1;
+
+  let r = nx*nx + ny*ny;
+
+  let v =
+    Math.sin(3*nx + t) +
+    Math.sin(3*ny - t);
+
+  let d = 1.0 / (0.3 + r);
+
+  let c = Math.sin(v + d + t);
+
+  let col = (c * 0.5 + 0.5) * 255;
+
+  let i = (y * W + x) * 4;
+  data[i] = col;
+  data[i+1] = col;
+  data[i+2] = col;
+  data[i+3] = 255;
+}
+
+}
+
+ctx.putImageData(img, 0, 0);
+t += 0.03;
+requestAnimationFrame(render);
+}
+
+render();
+</script>
+
+</body>
+</html>
