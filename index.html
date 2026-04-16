@@ -1,51 +1,72 @@
 <!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
-<title>Minimal MilkDrop TT</title>
 <style>
-  body { margin: 0; background: black; }
-  canvas { display: block; margin: auto; }
+body { margin:0; background:black; }
+canvas { display:block; margin:auto; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <script>
+const W = 256, H = 256;
 const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");const W = 256;
-const H = 256;
+canvas.width = W; canvas.height = H;
+const ctx = canvas.getContext("2d");let t = 0;
 
-canvas.width = W;
-canvas.height = H;
-
-let t = 0;
+// pseudo maze function (no memory)
+function maze(x, y) {
+let xi = Math.floor(x);
+let yi = Math.floor(y);
+return ((xi ^ yi) & 1); // checker-style labyrinth
+}
 
 function render() {
-const img = ctx.createImageData(W, H);
-const data = img.data;
+let img = ctx.createImageData(W, H);
+let d = img.data;
 
 for (let y = 0; y < H; y++) {
 for (let x = 0; x < W; x++) {
 
-  let nx = (x / W) * 2 - 1;
-  let ny = (y / H) * 2 - 1;
+  // screen → ray direction
+  let nx = (x / W) - 0.5;
 
-  let r = nx*nx + ny*ny;
+  // fake ray depth
+  let depth = 1.0;
+  let hit = 0;
 
-  let v =
-    Math.sin(3*nx + t) +
-    Math.sin(3*ny - t);
+  // fixed steps (TT-friendly)
+  for (let i = 0; i < 32; i++) {
+    let px = nx * depth * 4 + 8;
+    let py = depth * 4 + t;
 
-  let d = 1.0 / (0.3 + r);
+    if (maze(px, py)) {
+      hit = 1;
+      break;
+    }
+    depth += 0.05;
+  }
 
-  let c = Math.sin(v + d + t);
+  // wall height
+  let h = 1.0 / (0.1 + depth);
 
-  let col = (c * 0.5 + 0.5) * 255;
+  // snake (moving light)
+  let sx = Math.sin(t)*2;
+  let sy = t*2;
+  let snake = Math.exp(-((nx*4 - sx)**2 + (depth*4 - sy)**2));
 
-  let i = (y * W + x) * 4;
-  data[i] = col;
-  data[i+1] = col;
-  data[i+2] = col;
-  data[i+3] = 255;
+  let col = 0;
+
+  if (hit) {
+    let wall = h * 255;
+    col = wall + snake*200;
+  }
+
+  let i4 = (y*W + x)*4;
+  d[i4] = col;
+  d[i4+1] = col;
+  d[i4+2] = col;
+  d[i4+3] = 255;
 }
 
 }
